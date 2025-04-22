@@ -39,14 +39,29 @@ class RuletaRusa(discord.ui.View):
             return
 
         await channel.send(f"🎰 ¡La ruleta rusa comenzará ahora con {len(self.players)} jugadores! 🎰")
+        await asyncio.sleep(3)
+        
         while len(self.players) > 1:
             await asyncio.sleep(5)  # Espera 5 segundos entre cada ronda
+
             eliminado = random.choice(self.players)
             self.players.remove(eliminado)
-            await channel.send(f"💥 ¡{eliminado.mention} ha muerto! ¡Quedan {len(self.players)} jugadores!")
+
+            # Comentarios más ofensivos cuando un jugador muere
+            comentarios = [
+                f"💥 ¡{eliminado.mention} ha muerto! ¿De verdad pensabas que sobrevivirías? 🤣",
+                f"💥 ¡{eliminado.mention} se fue al otro lado! Menos mal que ya no tendremos que escuchar esas tonterías. 😂",
+                f"💥 ¡{eliminado.mention} ha muerto! Si sobrevivías, ¿qué pensabas, que ibas a ganar? ¡JAJA! 😆",
+                f"💥 ¡{eliminado.mention} ha muerto! Aunque estés muerto, aún sigues siendo el más inútil de todos. 😜",
+                f"💥 ¡{eliminado.mention} cayó! Te faltó suerte... o cerebro. 🧠😂"
+            ]
+            comentario = random.choice(comentarios)
+
+            embed = crear_embed("⚰️ Jugador muerto", comentario, discord.Color.red())
+            await channel.send(embed=embed)
         
         ganador = self.players[0]
-        await channel.send(f"🏆 ¡{ganador.mention} ha ganado! ¡El primero en morir ha sido el más gay! 🎉")
+        await channel.send(f"🏆 ¡{ganador.mention} ha ganado! ¡El primero en morir fue el más gay! 🎉")
 
 @client.event
 async def on_message(message):
@@ -98,7 +113,7 @@ async def on_message(message):
             "Si fueras código, te tirarías errores hasta dormido.",
             "Tus ideas tienen tanto sentido como un `print('Hola')` en C++. 🤯"
         ]
-        embed = crear_embed("🔥 Insulto amistoso", random.choice(insultos), discord.Color.red())
+        embed = crear_embed("🔥 Insulto", random.choice(insultos), discord.Color.red())
         await message.channel.send(embed=embed)
 
     elif content == "!frase":
