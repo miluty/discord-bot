@@ -41,9 +41,9 @@ async def on_message(message):
         embed = crear_embed("Lanzamiento de moneda", f"Resultado: **{resultado}**", discord.Color.gold())
         await message.channel.send(embed=embed)
 
-    elif content.startswith("!piedra"):
+    elif content.startswith("!r"):
         # Enviar mensaje pidiendo al usuario elegir
-        instrucciones = "¡Es tu turno! Elige entre: ✊ Piedra, 📄 Papel o ✂️ Tijera. Tienes 5 segundos para elegir. ⏳"
+        instrucciones = "¡Es tu turno! Elige entre: ✊ Piedra, 📄 Papel o ✂️ Tijera. Tienes 10 segundos para elegir. ⏳"
         embed = crear_embed("Piedra, Papel o Tijera", instrucciones, discord.Color.teal())
         await message.channel.send(embed=embed)
 
@@ -52,7 +52,7 @@ async def on_message(message):
 
         try:
             # Esperar la respuesta del usuario por 5 segundos
-            user_msg = await client.wait_for('message', timeout=5.0, check=check)
+            user_msg = await client.wait_for('message', timeout=10.0, check=check)
             user_choice = user_msg.content.lower()
             opciones = ["!piedra", "!papel", "!tijera"]
 
@@ -141,7 +141,7 @@ async def on_message(message):
             "**!coinflip** - Lanza una moneda (cara o cruz) 🪙\n"
             "**!beso @usuario** - Manda un beso a alguien 😘\n"
             "**!abrazo @usuario** - Da un abrazo a alguien 🤗\n"
-            "**!piedra** - Juega piedra, papel o tijera contra el bot ✊📄✂️\n"
+            "**!r** - Juega piedra, papel o tijera contra el bot ✊📄✂️\n"
             "**!insulto** - Recibe un insulto de programador amistoso 💀\n"
             "**!frase** - Te doy una frase motivadora 💡\n"
             "**!comandos** - Muestra esta lista 📜"
