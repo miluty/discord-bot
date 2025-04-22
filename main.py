@@ -198,7 +198,31 @@ async def on_message(message):
         ]
         embed = crear_embed("🔥 Insulto", random.choice(insultos), discord.Color.red())
         await message.channel.send(embed=embed)
+    elif content.startswith("!ship"):
+        if len(message.mentions) == 2:
+            persona1 = message.mentions[0]
+            persona2 = message.mentions[1]
+        elif len(message.mentions) == 1:
+            persona1 = message.author
+            persona2 = message.mentions[0]
+        else:
+            miembros = [miembro for miembro in message.guild.members if not miembro.bot]
+            persona1, persona2 = random.sample(miembros, 2)
 
+        porcentaje = random.randint(0, 100)
+        corazon = "💔" if porcentaje < 50 else "❤️" if porcentaje < 80 else "💖"
+        ship_name = (persona1.name[:len(persona1.name)//2] + persona2.name[len(persona2.name)//2:]).capitalize()
+
+        frases = [
+            f"💘 El amor entre {persona1.mention} y {persona2.mention} es del **{porcentaje}%** {corazon}",
+            f"🌹 ¡{ship_name} es real! El ship tiene una química de **{porcentaje}%** {corazon}",
+            f"💕 {persona1.mention} + {persona2.mention} = **{porcentaje}% de amor** {corazon}",
+        ]
+        frase = random.choice(frases)
+
+        embed = crear_embed("🔮 Amorómetro Activado", frase, discord.Color.pink())
+        embed.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/812/812856.png")
+        await message.channel.send(embed=embed)
     elif content == "!frase":
         frases = [
             "No te rindas, el principio siempre es lo más difícil 💪",
@@ -282,12 +306,27 @@ async def on_message(message):
 
     elif content == "!quiengay":
         miembros = [miembro for miembro in message.guild.members if not miembro.bot]
-        if miembros:
-            elegido = random.choice(miembros)
-            embed = crear_embed("🌈 Resultado Gayómetro", f"🎉 El más gay del servidor es: {elegido.mention} 🏳️‍🌈", discord.Color.magenta())
-            await message.channel.send(embed=embed)
-        else:
+
+        if not miembros:
             await message.channel.send("No hay miembros válidos en el servidor 😢")
+            return
+
+        mensaje = await message.channel.send("🌈 **Escaneando con el Gayómetro...** 🏳️‍🌈")
+
+    
+        for _ in range(20):  # Puedes ajustar el número de "pasadas"
+            elegido_temp = random.choice(miembros)
+            await mensaje.edit(content=f"🌈 **Escaneando...** Posible gay detectado: {elegido_temp.mention} 🕵️")
+            await asyncio.sleep(0.5)  
+
+        elegido_final = random.choice(miembros)
+        embed = crear_embed(
+            "🌈 Resultado Final del Gayómetro",
+            f"🎉 ¡El más gay del servidor es: {elegido_final.mention}! 🏳️‍🌈",
+            discord.Color.magenta()
+        )
+        await mensaje.edit(content=None, embed=embed)
+
 
 # Iniciar el bot
 client.run(TOKEN)
