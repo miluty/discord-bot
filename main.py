@@ -68,7 +68,7 @@ async def on_message(message):
         return
     
     # Comando de Trivia
-    if message.content.lower() == "!trivia":
+    if message.content.lower() == "!triv":
         preguntas = [
             {"pregunta": "¿Quién pintó la Mona Lisa?", "respuesta": "Leonardo da Vinci"},
             {"pregunta": "¿Cuál es el planeta más grande del sistema solar?", "respuesta": "Júpiter"},
