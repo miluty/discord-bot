@@ -62,7 +62,88 @@ class RuletaRusa(discord.ui.View):
         
         ganador = self.players[0]
         await channel.send(f"🏆 ¡{ganador.mention} ha ganado! ¡El primero en morir fue el más gay! 🎉")
+async def on_message(message):
+    # Asegúrate de que el bot no responda a sus propios mensajes
+    if message.author == client.user:
+        return
+    
+    # Comando de Trivia
+    if message.content.lower() == "!trivia":
+        preguntas = [
+            {"pregunta": "¿Quién pintó la Mona Lisa?", "respuesta": "Leonardo da Vinci"},
+            {"pregunta": "¿Cuál es el planeta más grande del sistema solar?", "respuesta": "Júpiter"},
+            {"pregunta": "¿En qué año cayó el Muro de Berlín?", "respuesta": "1989"},
+            {"pregunta": "¿Cuál es el río más largo del mundo?", "respuesta": "El Amazonas"},
+            {"pregunta": "¿Qué instrumento tiene 88 teclas?", "respuesta": "Piano"},
+            {"pregunta": "¿Quién es conocido como el padre de la teoría de la relatividad?", "respuesta": "Albert Einstein"},
+            {"pregunta": "¿Qué gas constituye la mayor parte de la atmósfera terrestre?", "respuesta": "Nitrógeno"},
+            {"pregunta": "¿En qué continente se encuentra el desierto de Sahara?", "respuesta": "África"},
+            {"pregunta": "¿Qué ciudad es conocida como la 'Gran Manzana'?", "respuesta": "Nueva York"},
+            {"pregunta": "¿Quién escribió 'Don Quijote de la Mancha'?", "respuesta": "Miguel de Cervantes"},
+            {"pregunta": "¿Cuál es el país más grande del mundo?", "respuesta": "Rusia"},
+            {"pregunta": "¿Cuántos planetas hay en nuestro sistema solar?", "respuesta": "8"},
+            {"pregunta": "¿En qué año llegó el hombre a la Luna?", "respuesta": "1969"},
+            {"pregunta": "¿Quién fue el primer presidente de los Estados Unidos?", "respuesta": "George Washington"},
+            {"pregunta": "¿Qué elemento químico tiene el símbolo 'O'?", "respuesta": "Oxígeno"},
+            {"pregunta": "¿Cuál es la capital de Japón?", "respuesta": "Tokio"},
+            {"pregunta": "¿En qué país se encuentra la pirámide de Giza?", "respuesta": "Egipto"},
+            {"pregunta": "¿Cuántos huesos tiene el cuerpo humano adulto?", "respuesta": "206"},
+            {"pregunta": "¿Qué animal es el mamífero más grande del mundo?", "respuesta": "Ballena azul"},
+            {"pregunta": "¿Cuál es la lengua más hablada del mundo?", "respuesta": "Chino mandarín"},
+            {"pregunta": "¿Cuál es el metal precioso más caro?", "respuesta": "Oro"},
+            {"pregunta": "¿Qué famoso científico formuló la ley de la gravedad?", "respuesta": "Isaac Newton"},
+            {"pregunta": "¿Quién fue el primer emperador romano?", "respuesta": "Augusto"},
+            {"pregunta": "¿En qué país nació la salsa como género musical?", "respuesta": "Cuba"},
+            {"pregunta": "¿Qué ciudad es conocida como la 'Ciudad de la Luz'?", "respuesta": "París"},
+            {"pregunta": "¿En qué año terminó la Segunda Guerra Mundial?", "respuesta": "1945"},
+            {"pregunta": "¿Qué famoso líder sudafricano fue encarcelado durante 27 años?", "respuesta": "Nelson Mandela"},
+            {"pregunta": "¿Qué animal tiene el cerebro más grande en relación a su tamaño?", "respuesta": "Delfín"},
+            {"pregunta": "¿Cuál es el océano más grande del mundo?", "respuesta": "Océano Pacífico"},
+            {"pregunta": "¿Qué famoso pintor cortó una parte de su oreja?", "respuesta": "Vincent van Gogh"},
+            {"pregunta": "¿Qué país tiene más habitantes del mundo?", "respuesta": "China"}
+        ]
+        
+        trivia = random.choice(preguntas)  # Selecciona una pregunta aleatoria
+        await message.channel.send(f"🎤 **Trivia:** {trivia['pregunta']}")
+        await message.channel.send("¡Responde en el chat y sé rápido para ganar! ⏳")
+        
+        # Función para verificar si la respuesta es correcta
+        def check(msg):
+            return msg.author != client.user and msg.content.lower() == trivia["respuesta"].lower()
+        
+        try:
+            # Espera por una respuesta correcta
+            respuesta = await client.wait_for('message', check=check, timeout=30.0)
+            # Añadir puntos al ganador
+            user_id = str(respuesta.author.id)
+            if user_id not in puntos:
+                puntos[user_id] = 0
+            puntos[user_id] += 10  # Añadir 10 puntos por responder correctamente
+            
+            # Anunciar al ganador
+            await message.channel.send(f"¡Correcto! {respuesta.author.mention} ha ganado 10 puntos. Ahora tiene {puntos[user_id]} puntos 🏆")
+        
+        except asyncio.TimeoutError:
+            await message.channel.send(f"Tiempo agotado 😢. La respuesta correcta era: **{trivia['respuesta']}**")
 
+    # Comando para ver los puntos de un usuario
+    elif message.content.lower() == "!puntos":
+        user_id = str(message.author.id)
+        if user_id not in puntos:
+            puntos[user_id] = 0
+        await message.channel.send(f"🎯 **{message.author.mention}, tienes {puntos[user_id]} puntos.**")
+
+    # Comando para ver el ranking de puntos
+    elif message.content.lower() == "!ranking":
+        ranking = sorted(puntos.items(), key=lambda x: x[1], reverse=True)[:5]  # Top 5 jugadores
+        if ranking:
+            mensaje_ranking = "🏆 **Ranking de Puntos:**\n"
+            for i, (user_id, score) in enumerate(ranking, 1):
+                user = await client.fetch_user(user_id)
+                mensaje_ranking += f"{i}. {user.mention} - {score} puntos\n"
+            await message.channel.send(mensaje_ranking)
+        else:
+            await message.channel.send("No hay jugadores con puntos aún.")
 @client.event
 async def on_message(message):
     if message.author == client.user:
