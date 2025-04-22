@@ -7,7 +7,7 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True
-intents.members = True  # Necesario para elegir un usuario al azar
+intents.members = True
 
 client = discord.Client(intents=intents)
 
@@ -19,6 +19,34 @@ def crear_embed(titulo, descripcion, color=discord.Color.blurple()):
     embed = discord.Embed(title=titulo, description=descripcion, color=color)
     embed.set_footer(text="Bot divertido 😎 | Usa !comandos para ver más")
     return embed
+
+class RuletaRusa(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.players = []
+
+    @discord.ui.button(label="Unirme a la ruleta rusa", style=discord.ButtonStyle.red)
+    async def join_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user not in self.players:
+            self.players.append(interaction.user)
+            await interaction.response.send_message(f"{interaction.user.mention} se ha unido a la ruleta rusa!", ephemeral=True)
+        else:
+            await interaction.response.send_message("¡Ya te has unido a la ruleta rusa!", ephemeral=True)
+
+    async def iniciar_ruleta(self, channel):
+        if len(self.players) < 2:
+            await channel.send("¡No hay suficientes jugadores! Se necesitan al menos 2 jugadores para jugar.")
+            return
+
+        await channel.send(f"🎰 ¡La ruleta rusa comenzará ahora con {len(self.players)} jugadores! 🎰")
+        while len(self.players) > 1:
+            await asyncio.sleep(5)  # Espera 5 segundos entre cada ronda
+            eliminado = random.choice(self.players)
+            self.players.remove(eliminado)
+            await channel.send(f"💥 ¡{eliminado.mention} ha muerto! ¡Quedan {len(self.players)} jugadores!")
+        
+        ganador = self.players[0]
+        await channel.send(f"🏆 ¡{ganador.mention} ha ganado! ¡El primero en morir ha sido el más gay! 🎉")
 
 @client.event
 async def on_message(message):
@@ -41,53 +69,26 @@ async def on_message(message):
         embed = crear_embed("Lanzamiento de moneda", f"Resultado: **{resultado}**", discord.Color.gold())
         await message.channel.send(embed=embed)
 
-    elif content.startswith("!r"):
-        # Enviar mensaje pidiendo al usuario elegir
-        instrucciones = "¡Es tu turno! Elige entre: ✊ Piedra, 📄 Papel o ✂️ Tijera. Tienes 10 segundos para elegir. ⏳"
-        embed = crear_embed("Piedra, Papel o Tijera", instrucciones, discord.Color.teal())
+    elif content.startswith("!beso"):
+        if message.mentions:
+            persona = message.mentions[0]
+            embed = crear_embed("💋 Beso virtual", f"{message.author.mention} le da un beso a {persona.mention} 😘", discord.Color.red())
+        else:
+            embed = crear_embed("💋 Beso perdido", "¡Menciona a alguien para mandarle un beso!", discord.Color.red())
         await message.channel.send(embed=embed)
 
-        def check(msg):
-            return msg.author == message.author and msg.content.lower() in ["!piedra", "!papel", "!tijera"]
-
-        try:
-            # Esperar la respuesta del usuario por 5 segundos
-            user_msg = await client.wait_for('message', timeout=10.0, check=check)
-            user_choice = user_msg.content.lower()
-            opciones = ["!piedra", "!papel", "!tijera"]
-
-            if user_choice not in opciones:
-                await message.channel.send(f"¡Tiempo agotado! No elegiste una opción válida.")
-                return
-
-        except asyncio.TimeoutError:
-            await message.channel.send("¡Tiempo agotado! No elegiste una opción a tiempo.")
-            return
-
-        # Elección del bot
-        elecciones = {
-            "!piedra": "✊ Piedra",
-            "!papel": "📄 Papel",
-            "!tijera": "✂️ Tijera"
-        }
-        eleccion_bot = random.choice(["!piedra", "!papel", "!tijera"])
-        eleccion_usuario = elecciones[user_choice]
-        eleccion_bot_texto = elecciones[eleccion_bot]
-
-        # Resultado
-        resultado = ""
-        if user_choice == eleccion_bot:
-            resultado = "Es un empate. 🤝"
-        elif (user_choice == "!piedra" and eleccion_bot == "!tijera") or (user_choice == "!papel" and eleccion_bot == "!piedra") or (user_choice == "!tijera" and eleccion_bot == "!papel"):
-            resultado = "¡Ganaste! 🎉"
+    elif content.startswith("!abrazo"):
+        if message.mentions:
+            persona = message.mentions[0]
+            embed = crear_embed("🤗 Abrazo virtual", f"{message.author.mention} abraza fuertemente a {persona.mention} 🫂", discord.Color.green())
         else:
-            resultado = "¡Perdiste! 😞"
+            embed = crear_embed("🤗 Abrazo al aire", "¡Menciona a alguien para abrazarlo!", discord.Color.green())
+        await message.channel.send(embed=embed)
 
-        embed = crear_embed(
-            "Piedra, Papel o Tijera",
-            f"**Tú elegiste:** {eleccion_usuario}\n**Yo elegí:** {eleccion_bot_texto}\n{resultado}",
-            discord.Color.green() if resultado == "¡Ganaste! 🎉" else discord.Color.red()
-        )
+    elif content == "!r":
+        opciones = ["✊ Piedra", "📄 Papel", "✂️ Tijera"]
+        eleccion_bot = random.choice(opciones)
+        embed = crear_embed("Piedra, papel o tijera", f"Yo elijo: **{eleccion_bot}**", discord.Color.teal())
         await message.channel.send(embed=embed)
 
     elif content == "!insulto":
@@ -97,7 +98,7 @@ async def on_message(message):
             "Si fueras código, te tirarías errores hasta dormido.",
             "Tus ideas tienen tanto sentido como un `print('Hola')` en C++. 🤯"
         ]
-        embed = crear_embed("🔥 Insulto", random.choice(insultos), discord.Color.red())
+        embed = crear_embed("🔥 Insulto amistoso", random.choice(insultos), discord.Color.red())
         await message.channel.send(embed=embed)
 
     elif content == "!frase":
@@ -137,17 +138,26 @@ async def on_message(message):
             "**!dado** - Lanza un dado 🎲\n"
             "**!broma** - Te cuento una broma divertida 😂\n"
             "**!8ball** - Pregunta algo y recibe una respuesta misteriosa 🎱\n"
-            "**!quiengay** - Etiqueta a alguien al azar como 'el más gay' 🌈\n"
             "**!coinflip** - Lanza una moneda (cara o cruz) 🪙\n"
             "**!beso @usuario** - Manda un beso a alguien 😘\n"
             "**!abrazo @usuario** - Da un abrazo a alguien 🤗\n"
             "**!r** - Juega piedra, papel o tijera contra el bot ✊📄✂️\n"
             "**!insulto** - Recibe un insulto de programador amistoso 💀\n"
             "**!frase** - Te doy una frase motivadora 💡\n"
-            "**!comandos** - Muestra esta lista 📜"
+            "**!comandos** - Muestra esta lista 📜\n"
+            "**!ruletarusa** - Juega a la ruleta rusa con otros jugadores 🎰"
         )
         embed = crear_embed("📜 Lista de Comandos", descripcion, discord.Color.orange())
         await message.channel.send(embed=embed)
+
+    elif content == "!ruletarusa":
+        # Crea la vista para la ruleta rusa
+        view = RuletaRusa()
+        await message.channel.send("¡La ruleta rusa está lista! Haz clic en el botón para unirte.", view=view)
+
+        # Da 30 segundos para que se unan los jugadores
+        await asyncio.sleep(30)
+        await view.iniciar_ruleta(message.channel)
 
     elif content == "!quiengay":
         miembros = [miembro for miembro in message.guild.members if not miembro.bot]
@@ -158,5 +168,5 @@ async def on_message(message):
         else:
             await message.channel.send("No hay miembros válidos en el servidor 😢")
 
-
+# Iniciar el bot
 client.run(TOKEN)
