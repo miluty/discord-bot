@@ -242,7 +242,7 @@ async def on_message(message):
         enlace = "https://www.mediafire.com/file/kb03nh03rjefd1x/pet.rar/file"  
         embed = crear_embed("🔧 ¡Enlace a los mods!", f"Aquí tienes el enlace a los mods: [Haz clic aquí]({enlace})")
         await message.channel.send(embed=embed)
-        elif content == "!server":
+    elif content == "!server":
         ip_mc = "nebulas.playghosting.com" 
         embed = crear_embed(
             "🌍 ¡Servidor de Minecraft Activo!",
