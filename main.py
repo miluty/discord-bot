@@ -62,13 +62,17 @@ class RuletaRusa(discord.ui.View):
         
         ganador = self.players[0]
         await channel.send(f"🏆 ¡{ganador.mention} ha ganado! ¡El primero en morir fue el más gay! 🎉")
+@client.event
 async def on_message(message):
-    # Asegúrate de que el bot no responda a sus propios mensajes
     if message.author == client.user:
         return
-    
-    # Comando de Trivia
-    if message.content.lower() == "!triv":
+
+    content = message.content.lower()
+
+    if content == "!ping":
+        embed = crear_embed("🏓 Pong!", "¡Estoy vivo!")
+        await message.channel.send(embed=embed)
+    elif message.content.lower() == "!triv":
         preguntas = [
             {"pregunta": "¿Quién pintó la Mona Lisa?", "respuesta": "Leonardo da Vinci"},
             {"pregunta": "¿Cuál es el planeta más grande del sistema solar?", "respuesta": "Júpiter"},
@@ -144,17 +148,6 @@ async def on_message(message):
             await message.channel.send(mensaje_ranking)
         else:
             await message.channel.send("No hay jugadores con puntos aún.")
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-
-    content = message.content.lower()
-
-    if content == "!ping":
-        embed = crear_embed("🏓 Pong!", "¡Estoy vivo!")
-        await message.channel.send(embed=embed)
-
     elif content == "!dado":
         numero = random.randint(1, 6)
         embed = crear_embed("🎲 Lanzaste un dado", f"Salió el número **{numero}**")
