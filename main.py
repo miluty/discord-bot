@@ -4,6 +4,7 @@ import random
 import asyncio
 import json
 
+
 TOKEN = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
@@ -11,7 +12,7 @@ intents.message_content = True
 intents.members = True
 
 client = discord.Client(intents=intents)
-
+const minecraft = require('minecraft-server-util');
 PUNTOS_FILE = "puntos.json"
 puntos = {}
 
@@ -50,31 +51,63 @@ class RuletaRusa(discord.ui.View):
 
     async def iniciar_ruleta(self, channel):
         if len(self.players) < 2:
-            await channel.send("¡No hay suficientes jugadores! Se necesitan al menos 2 jugadores para jugar.")
+            await channel.send("❌ ¡No hay suficientes jugadores! Se necesitan al menos 2 para jugar.")
             return
 
-        await channel.send(f"🎰 ¡La ruleta rusa comenzará ahora con {len(self.players)} jugadores! 🎰")
-        await asyncio.sleep(3)
-        
+        embed_inicio = discord.Embed(
+            title="🎰 ¡Comienza la Ruleta Rusa!",
+            description=f"🎮 Jugadores en la partida: {', '.join(p.mention for p in self.players)}\n\n🔫 Cargando balas...",
+            color=discord.Color.dark_red()
+        )
+        mensaje = await channel.send(embed=embed_inicio)
+        await asyncio.sleep(2)
+
         while len(self.players) > 1:
-            await asyncio.sleep(5)
-            eliminado = random.choice(self.players)
-            self.players.remove(eliminado)
+            await asyncio.sleep(3)
 
-            comentarios = [
-                f"💥 ¡{eliminado.mention} ha muerto! ¿De verdad pensabas que sobrevivirías? 🤣",
-                f"💥 ¡{eliminado.mention} se fue al otro lado! Menos mal que ya no tendremos que escuchar esas tonterías. 😂",
-                f"💥 ¡{eliminado.mention} ha muerto! Si sobrevivías, ¿qué pensabas, que ibas a ganar? ¡JAJA! 😆",
-                f"💥 ¡{eliminado.mention} ha muerto! Aunque estés muerto, aún sigues siendo el más inútil de todos. 😜",
-                f"💥 ¡{eliminado.mention} cayó! Te faltó suerte... o cerebro. 🧠😂"
-            ]
-            comentario = random.choice(comentarios)
+            actual = random.choice(self.players)
+            embed_ronda = discord.Embed(
+                title="🔫 Girando el tambor...",
+                description=f"🎯 Apuntando a {actual.mention}...",
+                color=discord.Color.orange()
+            )
+            await mensaje.edit(embed=embed_ronda)
+            await asyncio.sleep(2)
 
-            embed = crear_embed("⚰️ Jugador muerto", comentario, discord.Color.red())
-            await channel.send(embed=embed)
-        
+            disparo = random.randint(1, 6)
+            if disparo == 1:
+                self.players.remove(actual)
+
+                comentarios = [
+                    f"💥 ¡{actual.mention} ha muerto! ¿De verdad pensabas que sobrevivirías? 🤣",
+                    f"🧠 ¡{actual.mention} se fue al otro lado! Menos mal que ya no tendremos que escuchar sus tonterías. 😂",
+                    f"⚰️ ¡{actual.mention} ha muerto! Aunque estés muerto, aún sigues siendo el más inútil de todos. 😜",
+                    f"🩸 ¡{actual.mention} cayó! Te faltó suerte... o cerebro. 🧠💀",
+                    f"🔫 ¡{actual.mention} perdió! La vida no es para los débiles. 😈"
+                ]
+                comentario = random.choice(comentarios)
+
+                embed_muerto = discord.Embed(
+                    title="☠️ ¡Jugador Eliminado!",
+                    description=comentario,
+                    color=discord.Color.red()
+                )
+                await mensaje.edit(embed=embed_muerto)
+            else:
+                embed_salvado = discord.Embed(
+                    title="😮 ¡Sobrevivió!",
+                    description=f"{actual.mention} se salvó esta vez... pero no te confíes.",
+                    color=discord.Color.green()
+                )
+                await mensaje.edit(embed=embed_salvado)
+
         ganador = self.players[0]
-        await channel.send(f"🏆 ¡{ganador.mention} ha ganado! ¡El primero en morir fue el más gay! 🎉")
+        embed_ganador = discord.Embed(
+            title="🏆 ¡Tenemos un sobreviviente!",
+            description=f"🎉 **{ganador.mention} ha ganado la Ruleta Rusa!**\n\n💀 Todos los demás han caído... ¿Valió la pena?",
+            color=discord.Color.gold()
+        )
+        await channel.send(embed=embed_ganador)
 
 @client.event
 async def on_message(message):
@@ -145,7 +178,28 @@ async def on_message(message):
         if user_id not in puntos:
             puntos[user_id] = 0
         await message.channel.send(f"🎯 **{message.author.mention}, tienes {puntos[user_id]} puntos.**")
+    elif content == "!status":
+        server_ip = "nebulas.playghosting.com"  # Cambia por la IP de tu servidor
+        server = MinecraftServer.lookup(server_ip)
 
+        try:
+            status = server.status()
+            embed = discord.Embed(
+                title="Estado del Servidor de Minecraft",
+                description="🟢 ¡El servidor de Minecraft está activo!",
+                color=discord.Color.green()
+            )
+            embed.add_field(name="Jugadores en línea", value=f"👾 {status.players.online} jugadores conectados.")
+            embed.add_field(name="IP del Servidor", value=f"🖥️ `{server_ip}`")
+        except:
+            embed = discord.Embed(
+                title="Estado del Servidor de Minecraft",
+                description="🔴 No se puede conectar al servidor de Minecraft.",
+                color=discord.Color.red()
+            )
+            embed.add_field(name="Servidor", value="🔴 El servidor está caído o no es accesible en este momento.")
+
+        await message.channel.send(embed=embed)
 
     elif message.content.lower() == "!ranking":
         ranking = sorted(puntos.items(), key=lambda x: x[1], reverse=True)[:5] 
@@ -184,10 +238,39 @@ async def on_message(message):
         await message.channel.send(embed=embed)
 
     elif content == "!r":
-        opciones = ["✊ Piedra", "📄 Papel", "✂️ Tijera"]
-        eleccion_bot = random.choice(opciones)
-        embed = crear_embed("Piedra, papel o tijera", f"Yo elijo: **{eleccion_bot}**", discord.Color.teal())
-        await message.channel.send(embed=embed)
+        opciones = {"✊": "Piedra", "📄": "Papel", "✂️": "Tijera"}
+
+        view = discord.ui.View()
+
+        for emoji in opciones:
+            async def callback(interaction, emoji=emoji):
+                eleccion_usuario = opciones[emoji]
+                eleccion_bot = random.choice(list(opciones.values()))
+
+                resultado = ""
+                if eleccion_usuario == eleccion_bot:
+                    resultado = "🤝 ¡Empate!"
+                elif (
+                    (eleccion_usuario == "Piedra" and eleccion_bot == "Tijera") or
+                    (eleccion_usuario == "Papel" and eleccion_bot == "Piedra") or
+                    (eleccion_usuario == "Tijera" and eleccion_bot == "Papel")
+                ):
+                    resultado = "🎉 ¡Ganaste!"
+                else:
+                    resultado = "💀 ¡Perdiste!"
+
+                embed = crear_embed(
+                    "✊📄✂️ Piedra, Papel o Tijera",
+                    f"Tú elegiste: **{eleccion_usuario}**\nYo elegí: **{eleccion_bot}**\n\n**{resultado}**",
+                    discord.Color.teal()
+                )
+                await interaction.response.edit_message(embed=embed, view=None)
+
+            boton = discord.ui.Button(label=opciones[emoji], emoji=emoji, style=discord.ButtonStyle.primary)
+            boton.callback = callback
+            view.add_item(boton)
+
+        await message.channel.send("🕹️ Elige una opción:", view=view)
 
     elif content == "!insulto":
         insultos = [
@@ -195,34 +278,85 @@ async def on_message(message):
             "¡Eres más inútil que un ; en Python! 😂",
             "Si fueras código, te tirarías errores hasta dormido.",
             "Tus ideas tienen tanto sentido como un `print('Hola')` en C++. 🤯"
+            "Tu lógica tiene más bugs que Windows Vista. 🐛",
+            "¡Eres más inútil que un ; en Python! 😂",
+            "Si fueras código, te tirarías errores hasta dormido.",
+             "Tus ideas tienen tanto sentido como un `print('Hola')` en C++. 🤯",
+             "Tu CPU mental necesita urgentemente un reinicio. 🔁",
+             "Eres como una promesa en JavaScript... nunca te resuelves. 💥",
+             "No eres lento, eres asincrónico sin `await`. 🐌",
+             "Eres más irrelevante que un `break` fuera de un loop.",
+             "Tienes menos lógica que un condicional sin condición.",
+             "Eres el `404 Not Found` de la inteligencia. 🚫",
+             "Hasta Clippy tiene mejores aportes que tú. 📎",
+             "Tu nivel de sarcasmo está en `undefined`.",
+             "Eres como un semáforo en rojo en GTA... nadie te respeta. 🚗💥",
+            "Tienes menos propósito que un div sin estilo. 🧱",
+            "Tu flow es más roto que un servidor sin mantenimiento.",
+            "Eres como una función sin return... no sirves para nada. 🫠",
+            "Tienes más errores que código copiado de Stack Overflow sin entender. 🧠",
+            "Tu argumento es tan válido como un else sin if.",
+            "Eres el `NullPointerException` de la vida. 🧨",
+            "Tu lógica tiene menos sentido que una IA programando con emociones.",
+            "Más perdido que un include en un .py.",
+            "Tu presencia online tiene más lag que un Wi-Fi de McDonald's. 🍟📶",
+            "Eres como un `try` sin `except`, puro crash. 💻🔥",
+            "Tu existencia tiene menos compatibilidad que Internet Explorer en 2025. 🗑️",
+            "Te faltan más líneas de código que a Flappy Bird. 🐦",
+            "Tu energía es más negativa que un bug en producción.",
+            "Tienes menos alcance que una variable local fuera del scope.",
+            "Eres el print() de los debates: solo haces ruido.",
+            "Eres como un teclado sin tecla Enter: innecesario.",
+            "Tienes más errores que un estudiante en su primer `merge`. 🧪",
+            "Tu habilidad social es equivalente a un servidor sin puertos abiertos. 🔒",
+            "Más roto que un shader en Minecraft con 2GB de RAM. 🧱🔥",
+            "Si fueras una app, nadie te actualizaría.",
+             "Eres como un `while True:` sin break... solo das vueltas. 🌀",
+            "Tienes menos sentido común que una IA sin dataset. 🤖📉",
+            "Tu lógica haría llorar a un compilador. 😭",
+            "Eres más torpe que un NPC con pathfinding roto.",
+            "Eres como un código sin comentarios... nadie te entiende. 🤷‍♂️",
+              "Tu estilo tiene menos sentido que un CSS en un backend. 🎨💀",
+            "Más predecible que un código hardcodeado.",
+           "Tu IQ tiene un timeout. ⏳"
         ]
         embed = crear_embed("🔥 Insulto", random.choice(insultos), discord.Color.red())
         await message.channel.send(embed=embed)
     elif content.startswith("!ship"):
-        if len(message.mentions) == 2:
-            persona1 = message.mentions[0]
-            persona2 = message.mentions[1]
-        elif len(message.mentions) == 1:
-            persona1 = message.author
-            persona2 = message.mentions[0]
+        menciones = message.mentions
+        if len(menciones) == 2:
+            user1 = menciones[0]
+            user2 = menciones[1]
+            porcentaje = random.randint(0, 100)
+
+            # Emoji de corazones según compatibilidad
+            if porcentaje >= 90:
+                corazon = "💖💖💖"
+                mensaje = "¡Amor verdadero, sin duda alguna! 💍"
+            elif porcentaje >= 70:
+                corazon = "💘💘"
+                mensaje = "¡Una pareja con potencial! 🌹"
+            elif porcentaje >= 50:
+                corazon = "💗"
+                mensaje = "Hmm... podría funcionar 😅"
+            elif porcentaje >= 30:
+                corazon = "💔"
+                mensaje = "Ufff... no pinta bien 😬"
+            else:
+                corazon = "❌"
+                mensaje = "Amistad es lo mejor para ustedes 😂"
+
+            embed = crear_embed(
+                "💞 Test de Compatibilidad",
+                f"{user1.mention} ❤️ {user2.mention}\n\n"
+                f"**Compatibilidad:** `{porcentaje}%` {corazon}\n\n"
+                f"_{mensaje}_",
+                discord.Color.purple()
+            )
+            await message.channel.send(embed=embed)
         else:
-            miembros = [miembro for miembro in message.guild.members if not miembro.bot]
-            persona1, persona2 = random.sample(miembros, 2)
+            await message.channel.send("Debes mencionar a dos usuarios para hacer el ship. Ejemplo: `!ship @usuario1 @usuario2`")
 
-        porcentaje = random.randint(0, 100)
-        corazon = "💔" if porcentaje < 50 else "❤️" if porcentaje < 80 else "💖"
-        ship_name = (persona1.name[:len(persona1.name)//2] + persona2.name[len(persona2.name)//2:]).capitalize()
-
-        frases = [
-            f"💘 El amor entre {persona1.mention} y {persona2.mention} es del **{porcentaje}%** {corazon}",
-            f"🌹 ¡{ship_name} es real! El ship tiene una química de **{porcentaje}%** {corazon}",
-            f"💕 {persona1.mention} + {persona2.mention} = **{porcentaje}% de amor** {corazon}",
-        ]
-        frase = random.choice(frases)
-
-        embed = crear_embed("🔮 Amorómetro Activado", frase, discord.Color.pink())
-        embed.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/812/812856.png")
-        await message.channel.send(embed=embed)
     elif content == "!frase":
         frases = [
             "No te rindas, el principio siempre es lo más difícil 💪",
@@ -238,8 +372,46 @@ async def on_message(message):
             "¿Por qué los programadores confunden Halloween con Navidad? Porque OCT 31 = DEC 25. 🎃🎄",
             "¿Cuál es el animal más antiguo? La cebra, porque está en blanco y negro. 🦓",
             "¿Qué le dice una impresora a otra? ¿Esa hoja es tuya o es una impresión mía? 🖨️",
+            "¿Por qué el libro de matemáticas está triste? Porque tiene demasiados problemas. 📘",
+            "¿Qué hace una abeja en el gimnasio? ¡Zum-ba! 🐝",
+            "¿Cómo se llama el campeón de buceo japonés? Tokofondo. 🏊",
+            "¿Y el subcampeón? Kasitoko. 😆",
+            "¿Qué le dice un bit a otro? Nos vemos en el bus. 💾",
+            "¿Por qué no puedes confiar en un átomo? Porque hacen todo a escondidas. ⚛️",
+            "¿Cómo saluda un jardinero? ¡Hola, soy Eduardo y esta es mi pala! 👋",
+            "¿Qué le dijo el WiFi al modem? Sin ti no tengo conexión. ❤️",
+            "¿Por qué los peces no usan Facebook? Porque ya tienen muchos seguidores. 🐟",
+            "¿Qué hace un pez? ¡Nada! 🏊‍♂️",
+            "¿Por qué lloraba el libro de historia? Porque tenía demasiados conflictos. 📚",
+            "¿Cómo se despiden los químicos? Ácido un placer. 👋",
+            "¿Por qué la escoba está feliz? Porque va barriendo éxitos. 🧹",
+            "¿Por qué el tomate se puso rojo? Porque vio al otro tomate desnudo. 🍅",
+            "¿Qué pasa si tiras un pato al agua? Nada. 🦆",
+            "¿Cómo se llama el campeón de buceo alemán? Hunderwasser. 🇩🇪",
+            "¿Cómo se llama el padre de todos los chistes malos? Papá chiste. 👨‍🦰",
+            "¿Cuál es el colmo de un electricista? No encontrar su corriente ideal. ⚡",
+            "¿Qué hace un león en la nevera? ¡Frigorífico! 🦁❄️",
+            "¿Qué le dijo un teclado a otro? ¡No te metas en mis espacios! ⌨️",
+            "¿Por qué los esqueletos no pelean entre ellos? Porque no tienen agallas. ☠️",
+            "¿Qué es lo más divertido de un código mal hecho? Que siempre da risa... de desesperación. 💻",
+            "¿Por qué el programador fue al psicólogo? Porque tenía problemas de *cache*. 🧠",
+            "¿Por qué el servidor rompió con la base de datos? Porque tenía muchas relaciones. 💔",
+            "¿Qué dijo el compilador al código feo? ¡No puedo contigo! 😩",
+            "¿Cómo se dice pañuelo en japonés? Saka-moko. 🤧",
+            "¿Por qué la luna fue al colegio? Para mejorar sus fases. 🌕",
+            "¿Qué hace una neurona en una fiesta? ¡Sinapsis! 🧠🎉",
+            "¿Qué hacen dos pollos en un ascensor? ¡Ponen huevos! 🐔",
+            "¿Qué hace una vaca con los ojos cerrados? Leche concentrada. 🐄",
+            "¿Cómo se despiden los programadores? return 0; 👨‍💻",
+            "¿Qué hace un gato en la computadora? Busca el mouse. 🐱🖱️",
+            "¿Cuál es el colmo de un matemático? Tener problemas en casa. ➕➖",
+            "¿Qué hace un buzo con un libro? Busca el índice. 📖",
+            "¿Qué le dijo el café al azúcar? Sin ti, mi vida es amarga. ☕",
+            "¿Qué hace una oreja en una fiesta? Escucha música. 👂",
+            "¿Qué le dice un programador a su cita? Estás fuera de mi *scope*, pero lo intento. ❤️‍🔥",
         ]
-        embed = crear_embed("😂 Broma del día", random.choice(bromas), discord.Color.green())
+        broma = random.choice(bromas)
+        embed = crear_embed("😂 ¡Broma del día!", broma, discord.Color.gold())
         await message.channel.send(embed=embed)
 
     elif content == "!8ball":
@@ -311,21 +483,24 @@ async def on_message(message):
             await message.channel.send("No hay miembros válidos en el servidor 😢")
             return
 
-        mensaje = await message.channel.send("🌈 **Escaneando con el Gayómetro...** 🏳️‍🌈")
+        embed = discord.Embed(
+            title="🌈 Escaneando con el Gayómetro...",
+            description="🔎 Preparando escaneo...",
+            color=discord.Color.magenta()
+        )
+        mensaje = await message.channel.send(embed=embed)
 
-    
-        for _ in range(20):  # Puedes ajustar el número de "pasadas"
+        for _ in range(15):  # Número de "pasadas"
             elegido_temp = random.choice(miembros)
-            await mensaje.edit(content=f"🌈 **Escaneando...** Posible gay detectado: {elegido_temp.mention} 🕵️")
-            await asyncio.sleep(0.5)  
+            embed.description = f"🔎 Posible gay detectado: {elegido_temp.mention}...\n🌈 Escaneando..."
+            await mensaje.edit(embed=embed)
+            await asyncio.sleep(0.4)
 
         elegido_final = random.choice(miembros)
-        embed = crear_embed(
-            "🌈 Resultado Final del Gayómetro",
-            f"🎉 ¡El más gay del servidor es: {elegido_final.mention}! 🏳️‍🌈",
-            discord.Color.magenta()
-        )
-        await mensaje.edit(content=None, embed=embed)
+        embed.title = "🌈 Resultado Final del Gayómetro"
+        embed.description = f"🎉 ¡El más gay del servidor es: {elegido_final.mention}! 🏳️‍🌈"
+        await mensaje.edit(embed=embed)
+
 
 
 # Iniciar el bot
