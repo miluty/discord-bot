@@ -10,7 +10,7 @@ intents.message_content = True
 intents.members = True
 
 client = discord.Client(intents=intents)
-
+puntos = {}
 @client.event
 async def on_ready():
     print(f'✅ Bot conectado como {client.user}')
