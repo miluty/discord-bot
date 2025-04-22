@@ -1,6 +1,7 @@
 import discord
 import os
 import random
+import asyncio
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 
@@ -40,26 +41,53 @@ async def on_message(message):
         embed = crear_embed("Lanzamiento de moneda", f"Resultado: **{resultado}**", discord.Color.gold())
         await message.channel.send(embed=embed)
 
-    elif content.startswith("!beso"):
-        if message.mentions:
-            persona = message.mentions[0]
-            embed = crear_embed("💋 Beso virtual", f"{message.author.mention} le da un beso a {persona.mention} 😘", discord.Color.red())
-        else:
-            embed = crear_embed("💋 Beso perdido", "¡Menciona a alguien para mandarle un beso!", discord.Color.red())
+    elif content.startswith("!piedra"):
+        # Enviar mensaje pidiendo al usuario elegir
+        instrucciones = "¡Es tu turno! Elige entre: ✊ Piedra, 📄 Papel o ✂️ Tijera. Tienes 5 segundos para elegir. ⏳"
+        embed = crear_embed("Piedra, Papel o Tijera", instrucciones, discord.Color.teal())
         await message.channel.send(embed=embed)
 
-    elif content.startswith("!abrazo"):
-        if message.mentions:
-            persona = message.mentions[0]
-            embed = crear_embed("🤗 Abrazo virtual", f"{message.author.mention} abraza fuertemente a {persona.mention} 🫂", discord.Color.green())
-        else:
-            embed = crear_embed("🤗 Abrazo al aire", "¡Menciona a alguien para abrazarlo!", discord.Color.green())
-        await message.channel.send(embed=embed)
+        def check(msg):
+            return msg.author == message.author and msg.content.lower() in ["!piedra", "!papel", "!tijera"]
 
-    elif content == "!piedra":
-        opciones = ["✊ Piedra", "📄 Papel", "✂️ Tijera"]
-        eleccion_bot = random.choice(opciones)
-        embed = crear_embed("Piedra, papel o tijera", f"Yo elijo: **{eleccion_bot}**", discord.Color.teal())
+        try:
+            # Esperar la respuesta del usuario por 5 segundos
+            user_msg = await client.wait_for('message', timeout=5.0, check=check)
+            user_choice = user_msg.content.lower()
+            opciones = ["!piedra", "!papel", "!tijera"]
+
+            if user_choice not in opciones:
+                await message.channel.send(f"¡Tiempo agotado! No elegiste una opción válida.")
+                return
+
+        except asyncio.TimeoutError:
+            await message.channel.send("¡Tiempo agotado! No elegiste una opción a tiempo.")
+            return
+
+        # Elección del bot
+        elecciones = {
+            "!piedra": "✊ Piedra",
+            "!papel": "📄 Papel",
+            "!tijera": "✂️ Tijera"
+        }
+        eleccion_bot = random.choice(["!piedra", "!papel", "!tijera"])
+        eleccion_usuario = elecciones[user_choice]
+        eleccion_bot_texto = elecciones[eleccion_bot]
+
+        # Resultado
+        resultado = ""
+        if user_choice == eleccion_bot:
+            resultado = "Es un empate. 🤝"
+        elif (user_choice == "!piedra" and eleccion_bot == "!tijera") or (user_choice == "!papel" and eleccion_bot == "!piedra") or (user_choice == "!tijera" and eleccion_bot == "!papel"):
+            resultado = "¡Ganaste! 🎉"
+        else:
+            resultado = "¡Perdiste! 😞"
+
+        embed = crear_embed(
+            "Piedra, Papel o Tijera",
+            f"**Tú elegiste:** {eleccion_usuario}\n**Yo elegí:** {eleccion_bot_texto}\n{resultado}",
+            discord.Color.green() if resultado == "¡Ganaste! 🎉" else discord.Color.red()
+        )
         await message.channel.send(embed=embed)
 
     elif content == "!insulto":
@@ -69,7 +97,7 @@ async def on_message(message):
             "Si fueras código, te tirarías errores hasta dormido.",
             "Tus ideas tienen tanto sentido como un `print('Hola')` en C++. 🤯"
         ]
-        embed = crear_embed("🔥 Insulto amistoso", random.choice(insultos), discord.Color.red())
+        embed = crear_embed("🔥 Insulto", random.choice(insultos), discord.Color.red())
         await message.channel.send(embed=embed)
 
     elif content == "!frase":
@@ -130,5 +158,5 @@ async def on_message(message):
         else:
             await message.channel.send("No hay miembros válidos en el servidor 😢")
 
-# Iniciar el bot
+
 client.run(TOKEN)
