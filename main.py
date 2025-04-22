@@ -2,6 +2,7 @@ import discord
 import os
 import random
 import asyncio
+import json
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 
@@ -10,9 +11,23 @@ intents.message_content = True
 intents.members = True
 
 client = discord.Client(intents=intents)
+
+PUNTOS_FILE = "puntos.json"
 puntos = {}
+
+def guardar_puntos():
+    with open(PUNTOS_FILE, "w") as f:
+        json.dump(puntos, f)
+
+def cargar_puntos():
+    global puntos
+    if os.path.exists(PUNTOS_FILE):
+        with open(PUNTOS_FILE, "r") as f:
+            puntos = json.load(f)
+
 @client.event
 async def on_ready():
+    cargar_puntos()
     print(f'✅ Bot conectado como {client.user}')
 
 def crear_embed(titulo, descripcion, color=discord.Color.blurple()):
@@ -42,12 +57,10 @@ class RuletaRusa(discord.ui.View):
         await asyncio.sleep(3)
         
         while len(self.players) > 1:
-            await asyncio.sleep(5)  
-
+            await asyncio.sleep(5)
             eliminado = random.choice(self.players)
             self.players.remove(eliminado)
 
-         
             comentarios = [
                 f"💥 ¡{eliminado.mention} ha muerto! ¿De verdad pensabas que sobrevivirías? 🤣",
                 f"💥 ¡{eliminado.mention} se fue al otro lado! Menos mal que ya no tendremos que escuchar esas tonterías. 😂",
@@ -62,6 +75,7 @@ class RuletaRusa(discord.ui.View):
         
         ganador = self.players[0]
         await channel.send(f"🏆 ¡{ganador.mention} ha ganado! ¡El primero en morir fue el más gay! 🎉")
+
 @client.event
 async def on_message(message):
     if message.author == client.user:
@@ -106,27 +120,22 @@ async def on_message(message):
             {"pregunta": "¿Qué famoso pintor cortó una parte de su oreja?", "respuesta": "Vincent van Gogh"},
             {"pregunta": "¿Qué país tiene más habitantes del mundo?", "respuesta": "China"}
         ]
-        
-        trivia = random.choice(preguntas) 
+
+        trivia = random.choice(preguntas)
         await message.channel.send(f"🎤 **Trivia:** {trivia['pregunta']}")
         await message.channel.send("¡Responde en el chat y sé rápido para ganar! ⏳")
-        
-     
+
         def check(msg):
             return msg.author != client.user and msg.content.lower() == trivia["respuesta"].lower()
-        
+
         try:
-           
             respuesta = await client.wait_for('message', check=check, timeout=30.0)
-   
             user_id = str(respuesta.author.id)
             if user_id not in puntos:
                 puntos[user_id] = 0
-            puntos[user_id] += 10  
-            
-         
+            puntos[user_id] += 10
+            guardar_puntos()
             await message.channel.send(f"¡Correcto! {respuesta.author.mention} ha ganado 10 puntos. Ahora tiene {puntos[user_id]} puntos 🏆")
-        
         except asyncio.TimeoutError:
             await message.channel.send(f"Tiempo agotado 😢. La respuesta correcta era: **{trivia['respuesta']}**")
 
@@ -240,15 +249,28 @@ async def on_message(message):
         await message.channel.send(embed=embed)
     elif content == "!mods":
         enlace = "https://www.mediafire.com/file/kb03nh03rjefd1x/pet.rar/file"  
-        embed = crear_embed("🔧 ¡Enlace a los mods!", f"Aquí tienes el enlace a los mods: [Haz clic aquí]({enlace})")
-        await message.channel.send(embed=embed)
-    elif content == "!server":
-        ip_mc = "nebulas.playghosting.com" 
         embed = crear_embed(
-            "🌍 ¡Servidor de Minecraft Activo!",
-            f"🟢 **IP del servidor:** `{ip_mc}`\n\n🛡️ ¡Entra ahora y únete a la diversión con la comunidad!"
+            "🛠️ Descarga de Mods - Pack oficial",
+            "🎮 ¡Prepara tu juego con estilo! Aquí tienes el pack de mods para disfrutar al máximo.\n\n"
+            f"🔗 [**Haz clic aquí para descargar**]({enlace})",
+            discord.Color.dark_gold()
         )
+        embed.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/3135/3135715.png")  # Icono opcional
         await message.channel.send(embed=embed)
+
+    elif content == "!server":
+        ip_mc = "nebulas.playghosting.com"
+        embed = crear_embed(
+            "🌐 Servidor de Minecraft - Comunidad Nebulas",
+            "🎉 ¡Únete al servidor oficial y juega con amigos!\n\n"
+            f"💻 **IP del servidor:** `{ip_mc}`\n"
+            "🧱 Modded y lleno de aventuras, ¡no te lo pierdas!\n"
+            "🎁 Eventos, retos, y diversión 24/7.",
+            discord.Color.green()
+        )
+        embed.set_thumbnail(url="https://static.wikia.nocookie.net/minecraft_gamepedia/images/f/f9/Grass_Block_JE5_BE3.png")  # Bloque de Minecraft
+        await message.channel.send(embed=embed)
+
     elif content == "!ruletarusa":
         # Crea la vista para la ruleta rusa
         view = RuletaRusa()
