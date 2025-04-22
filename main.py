@@ -12,7 +12,7 @@ intents.message_content = True
 intents.members = True
 
 client = discord.Client(intents=intents)
-const minecraft = require('minecraft-server-util');
+
 PUNTOS_FILE = "puntos.json"
 puntos = {}
 
@@ -178,28 +178,6 @@ async def on_message(message):
         if user_id not in puntos:
             puntos[user_id] = 0
         await message.channel.send(f"🎯 **{message.author.mention}, tienes {puntos[user_id]} puntos.**")
-    elif content == "!status":
-        server_ip = "nebulas.playghosting.com"  # Cambia por la IP de tu servidor
-        server = MinecraftServer.lookup(server_ip)
-
-        try:
-            status = server.status()
-            embed = discord.Embed(
-                title="Estado del Servidor de Minecraft",
-                description="🟢 ¡El servidor de Minecraft está activo!",
-                color=discord.Color.green()
-            )
-            embed.add_field(name="Jugadores en línea", value=f"👾 {status.players.online} jugadores conectados.")
-            embed.add_field(name="IP del Servidor", value=f"🖥️ `{server_ip}`")
-        except:
-            embed = discord.Embed(
-                title="Estado del Servidor de Minecraft",
-                description="🔴 No se puede conectar al servidor de Minecraft.",
-                color=discord.Color.red()
-            )
-            embed.add_field(name="Servidor", value="🔴 El servidor está caído o no es accesible en este momento.")
-
-        await message.channel.send(embed=embed)
 
     elif message.content.lower() == "!ranking":
         ranking = sorted(puntos.items(), key=lambda x: x[1], reverse=True)[:5] 
