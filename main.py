@@ -42,12 +42,12 @@ class RuletaRusa(discord.ui.View):
         await asyncio.sleep(3)
         
         while len(self.players) > 1:
-            await asyncio.sleep(5)  # Espera 5 segundos entre cada ronda
+            await asyncio.sleep(5)  
 
             eliminado = random.choice(self.players)
             self.players.remove(eliminado)
 
-            # Comentarios más ofensivos cuando un jugador muere
+         
             comentarios = [
                 f"💥 ¡{eliminado.mention} ha muerto! ¿De verdad pensabas que sobrevivirías? 🤣",
                 f"💥 ¡{eliminado.mention} se fue al otro lado! Menos mal que ya no tendremos que escuchar esas tonterías. 😂",
@@ -107,39 +107,39 @@ async def on_message(message):
             {"pregunta": "¿Qué país tiene más habitantes del mundo?", "respuesta": "China"}
         ]
         
-        trivia = random.choice(preguntas)  # Selecciona una pregunta aleatoria
+        trivia = random.choice(preguntas) 
         await message.channel.send(f"🎤 **Trivia:** {trivia['pregunta']}")
         await message.channel.send("¡Responde en el chat y sé rápido para ganar! ⏳")
         
-        # Función para verificar si la respuesta es correcta
+     
         def check(msg):
             return msg.author != client.user and msg.content.lower() == trivia["respuesta"].lower()
         
         try:
-            # Espera por una respuesta correcta
+           
             respuesta = await client.wait_for('message', check=check, timeout=30.0)
-            # Añadir puntos al ganador
+   
             user_id = str(respuesta.author.id)
             if user_id not in puntos:
                 puntos[user_id] = 0
-            puntos[user_id] += 10  # Añadir 10 puntos por responder correctamente
+            puntos[user_id] += 10  
             
-            # Anunciar al ganador
+         
             await message.channel.send(f"¡Correcto! {respuesta.author.mention} ha ganado 10 puntos. Ahora tiene {puntos[user_id]} puntos 🏆")
         
         except asyncio.TimeoutError:
             await message.channel.send(f"Tiempo agotado 😢. La respuesta correcta era: **{trivia['respuesta']}**")
 
-    # Comando para ver los puntos de un usuario
+   
     elif message.content.lower() == "!puntos":
         user_id = str(message.author.id)
         if user_id not in puntos:
             puntos[user_id] = 0
         await message.channel.send(f"🎯 **{message.author.mention}, tienes {puntos[user_id]} puntos.**")
 
-    # Comando para ver el ranking de puntos
+
     elif message.content.lower() == "!ranking":
-        ranking = sorted(puntos.items(), key=lambda x: x[1], reverse=True)[:5]  # Top 5 jugadores
+        ranking = sorted(puntos.items(), key=lambda x: x[1], reverse=True)[:5] 
         if ranking:
             mensaje_ranking = "🏆 **Ranking de Puntos:**\n"
             for i, (user_id, score) in enumerate(ranking, 1):
@@ -238,13 +238,23 @@ async def on_message(message):
         )
         embed = crear_embed("📜 Lista de Comandos", descripcion, discord.Color.orange())
         await message.channel.send(embed=embed)
-
+    elif content == "!mods":
+        enlace = "https://www.mediafire.com/file/kb03nh03rjefd1x/pet.rar/file"  
+        embed = crear_embed("🔧 ¡Enlace a los mods!", f"Aquí tienes el enlace a los mods: [Haz clic aquí]({enlace})")
+        await message.channel.send(embed=embed)
+        elif content == "!server":
+        ip_mc = "nebulas.playghosting.com" 
+        embed = crear_embed(
+            "🌍 ¡Servidor de Minecraft Activo!",
+            f"🟢 **IP del servidor:** `{ip_mc}`\n\n🛡️ ¡Entra ahora y únete a la diversión con la comunidad!"
+        )
+        await message.channel.send(embed=embed)
     elif content == "!ruletarusa":
         # Crea la vista para la ruleta rusa
         view = RuletaRusa()
         await message.channel.send("¡La ruleta rusa está lista! Haz clic en el botón para unirte.", view=view)
 
-        # Da 30 segundos para que se unan los jugadores
+        #
         await asyncio.sleep(30)
         await view.iniciar_ruleta(message.channel)
 
