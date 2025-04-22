@@ -34,7 +34,8 @@ async def on_message(message):
         numero = random.randint(1, 6)
         embed = crear_embed("🎲 Lanzaste un dado", f"Salió el número **{numero}**")
         await message.channel.send(embed=embed)
-        elif content == "!coinflip":
+
+    elif content == "!coinflip":
         resultado = random.choice(["🪙 Cara", "🪙 Cruz"])
         embed = crear_embed("Lanzamiento de moneda", f"Resultado: **{resultado}**", discord.Color.gold())
         await message.channel.send(embed=embed)
@@ -119,7 +120,6 @@ async def on_message(message):
         )
         embed = crear_embed("📜 Lista de Comandos", descripcion, discord.Color.orange())
         await message.channel.send(embed=embed)
-
 
     elif content == "!quiengay":
         miembros = [miembro for miembro in message.guild.members if not miembro.bot]
