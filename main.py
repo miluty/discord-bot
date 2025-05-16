@@ -4,7 +4,7 @@ import random
 import asyncio
 import json
 
-TOKEN = os.getenv("MTM3Mjc3ODcxNzc0MjUwMTk0OA.GsnwDn.fBPGT-zclrQxtaj0C9c5JF9TYUXbJ6boU5Bcbc")
+TOKEN = "MTM3Mjc3ODcxNzc0MjUwMTk0OA.GsnwDn.fBPGT-zclrQxtaj0C9c5JF9TYUXbJ6boU5Bcbc"
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -28,6 +28,7 @@ def cargar_puntos():
 @client.event
 async def on_ready():
     cargar_puntos()
+    client.add_view(TicketView())  # Esto hace persistente el botón si el bot se reinicia
     print(f'✅ Bot conectado como {client.user}')
 
 def crear_embed(titulo, descripcion, color=discord.Color.blurple()):
@@ -86,24 +87,17 @@ async def on_message(message):
         )
         await message.channel.send(embed=embed, view=view)
 
-    # --- Resto de comandos que tienes ---
     elif content == "!ping":
         embed = crear_embed("🏓 Pong!", "¡Estoy vivo!")
         await message.channel.send(embed=embed)
-    elif message.content.lower() == "!triv":
+
+    elif content == "!triv":
         preguntas = [
             # tus preguntas aquí...
         ]
         # Código trivia (el que ya tienes)
 
-# Agregar las vistas cuando el bot se conecte para que reconozca botones persistentes
-@client.event
-async def on_ready():
-    cargar_puntos()
-    client.add_view(TicketView())  # Esto hace persistente el botón si el bot se reinicia
-    print(f'✅ Bot conectado como {client.user}')
-
-# Tu clase RuletaRusa y demás código aquí (sin cambios)
+# Aquí continúa el resto de tu código (por ejemplo, clase RuletaRusa, etc)
 
 # Iniciar el bot
 client.run(TOKEN)
