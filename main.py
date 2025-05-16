@@ -4,7 +4,7 @@ import random
 import asyncio
 import json
 
-TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN = os.getenv("MTM3Mjc3ODcxNzc0MjUwMTk0OA.GsnwDn.fBPGT-zclrQxtaj0C9c5JF9TYUXbJ6boU5Bcbc")
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -107,4 +107,3 @@ async def on_ready():
 
 # Iniciar el bot
 client.run(TOKEN)
-
